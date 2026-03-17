@@ -1,5 +1,8 @@
 name: Build Bomberman Executable
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [ main ]
@@ -42,6 +45,7 @@ jobs:
           exit /b 1
         )
         echo Build successful!
+        powershell -Command "Get-Item dist/Bomberman.exe | Select-Object FullName, Length"
     
     - name: Upload to artifacts
       uses: actions/upload-artifact@v4
@@ -52,11 +56,10 @@ jobs:
     
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: "dist/Bomberman.exe"
-        draft: false
-        prerelease: false
-        generateReleaseNotes: true
+      run: |
+        $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
+        gh release create $tag dist/Bomberman.exe --title "Bomberman $tag" --generate-notes
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
