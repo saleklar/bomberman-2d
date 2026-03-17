@@ -27,34 +27,34 @@ jobs:
         python -m pip install --upgrade pip
         pip install pygame pyinstaller
     
+    - name: List files before build
+      run: |
+        dir bomberman_2d
+        dir bomberman_2d\assets
+    
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --name "Bomberman" --add-data "bomberman_2d\assets;assets" "bomberman_2d\main.py"
+        echo "Building Bomberman.exe..."
+        pyinstaller --onefile --windowed --name "Bomberman" --add-data "bomberman_2d/assets;assets" "bomberman_2d/main.py"
+        echo "Build complete, checking dist folder..."
+        dir dist
+        if not exist "dist\Bomberman.exe" (
+          echo ERROR: Bomberman.exe was not created!
+          exit /b 1
+        )
+        echo Build successful!
     
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: Bomberman-Windows
         path: dist/Bomberman.exe
+        if-no-files-found: error
     
-    - name: Create Release
+    - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/Bomberman.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Bomberman ${{ github.ref }}
-        draft: false
-        prerelease: false
-    
-    - name: Upload Release Asset
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/Bomberman.exe
-        asset_name: Bomberman.exe
-        asset_content_type: application/octet-stream
