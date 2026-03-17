@@ -12,54 +12,33 @@ on:
 
 jobs:
   build:
-    name: Build Bomberman.exe
+    name: Build Windows Executable
     runs-on: windows-latest
     
-    permissions:
-      contents: write
-    
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
     
-    - name: Set up Python 3.11
+    - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     
-    - name: Install dependencies
+    - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pygame pyinstaller
     
-    - name: Build executable with PyInstaller
+    - name: Build EXE
+      working-directory: .
       run: |
-        echo "Building Bomberman.exe..."
         pyinstaller --onefile --windowed --name "Bomberman" --add-data "bomberman_2d/assets;assets" "bomberman_2d/main.py"
-        echo "Build complete, checking dist folder..."
         dir dist
-        if not exist "dist\Bomberman.exe" (
-          echo ERROR: Bomberman.exe was not created!
-          exit /b 1
-        )
-        echo Build successful!
-        powershell -Command "Get-Item dist/Bomberman.exe | Select-Object FullName, Length"
     
-    - name: Upload to artifacts
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Bomberman-Windows
+        name: Bomberman-exe
         path: dist/Bomberman.exe
-        if-no-files-found: error
-    
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
-        gh release create $tag dist/Bomberman.exe --title "Bomberman $tag" --generate-notes
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
